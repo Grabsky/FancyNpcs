@@ -23,7 +23,13 @@ import de.oliver.fancynpcs.api.Npc;
 import de.oliver.fancynpcs.api.NpcData;
 import de.oliver.fancynpcs.api.NpcManager;
 import de.oliver.fancynpcs.commands.CloudCommandManager;
-import de.oliver.fancynpcs.listeners.*;
+import de.oliver.fancynpcs.commands.npc.CreateCMD;
+import de.oliver.fancynpcs.listeners.PlayerChangedWorldListener;
+import de.oliver.fancynpcs.listeners.PlayerJoinListener;
+import de.oliver.fancynpcs.listeners.PlayerNpcsListener;
+import de.oliver.fancynpcs.listeners.PlayerQuitListener;
+import de.oliver.fancynpcs.listeners.PlayerTeleportListener;
+import de.oliver.fancynpcs.listeners.PlayerUseUnknownEntityListener;
 import de.oliver.fancynpcs.tracker.TurnToPlayerTracker;
 import de.oliver.fancynpcs.tracker.VisibilityTracker;
 import de.oliver.fancynpcs.v1_19_4.Npc_1_19_4;
@@ -39,6 +45,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import revxrsal.commands.Lamp;
+import revxrsal.commands.bukkit.BukkitLamp;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 
 import java.util.Objects;
 import java.util.Random;
@@ -296,10 +305,13 @@ public class FancyNpcs extends JavaPlugin implements FancyNpcsPlugin {
         }
         // Creating new instance of CloudCommandManager and registering all needed components.
         // NOTE: Brigadier is disabled by default. More detailed information about that can be found in CloudCommandManager class.
-        commandManager = new CloudCommandManager(this, false)
-                .registerArguments()
-                .registerExceptionHandlers()
-                .registerCommands();
+//        commandManager = new CloudCommandManager(this, false)
+//                .registerArguments()
+//                .registerExceptionHandlers()
+//                .registerCommands();
+        final Lamp<BukkitCommandActor> commands = BukkitLamp.builder(this).build();
+        // ...
+        commands.register(CreateCMD.INSTANCE);
     }
 
     @Override
