@@ -22,6 +22,8 @@ import de.oliver.fancynpcs.api.FancyNpcsPlugin;
 import de.oliver.fancynpcs.api.Npc;
 import de.oliver.fancynpcs.api.NpcData;
 import de.oliver.fancynpcs.api.NpcManager;
+import de.oliver.fancynpcs.api.utils.SkinCache;
+import de.oliver.fancynpcs.api.utils.SkinFetcher;
 import de.oliver.fancynpcs.commands.CloudCommandManager;
 import de.oliver.fancynpcs.commands.npc.CreateCMD;
 import de.oliver.fancynpcs.listeners.PlayerChangedWorldListener;
@@ -32,6 +34,7 @@ import de.oliver.fancynpcs.listeners.PlayerTeleportListener;
 import de.oliver.fancynpcs.listeners.PlayerUseUnknownEntityListener;
 import de.oliver.fancynpcs.tracker.TurnToPlayerTracker;
 import de.oliver.fancynpcs.tracker.VisibilityTracker;
+import de.oliver.fancynpcs.utils.SkinCacheYaml;
 import de.oliver.fancynpcs.v1_19_4.Npc_1_19_4;
 import de.oliver.fancynpcs.v1_19_4.PacketReader_1_19_4;
 import de.oliver.fancynpcs.v1_20.PacketReader_1_20;
@@ -49,6 +52,8 @@ import revxrsal.commands.Lamp;
 import revxrsal.commands.bukkit.BukkitLamp;
 import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -77,6 +82,7 @@ public class FancyNpcs extends JavaPlugin implements FancyNpcsPlugin {
     private Function<NpcData, Npc> npcAdapter;
     private NpcManagerImpl npcManager;
     private AttributeManagerImpl attributeManager;
+    private SkinCacheYaml skinCache;
     private VisibilityTracker visibilityTracker;
     private boolean usingPlotSquared;
 
@@ -156,6 +162,9 @@ public class FancyNpcs extends JavaPlugin implements FancyNpcsPlugin {
         config.reload();
 
         attributeManager = new AttributeManagerImpl();
+
+        skinCache = new SkinCacheYaml();
+        skinCache.loadAndInsertToSkinFetcher();
 
         textConfig = new TextConfig("#E33239", "#AD1D23", "#81E366", "#E3CA66", "#E36666", "");
         translator = new Translator(textConfig);
@@ -303,6 +312,27 @@ public class FancyNpcs extends JavaPlugin implements FancyNpcsPlugin {
         if (config.isEnableAutoSave() && config.getAutoSaveInterval() > 0) {
             scheduler.runTaskTimerAsynchronously(60L * 20L, autosaveInterval * 60L * 20L, () -> npcManager.saveNpcs(false));
         }
+
+        int npcUpdateInterval = config.getNpcUpdateInterval();
+        npcThread.scheduleAtFixedRate(() -> {
+            List<Npc> npcs = new ArrayList<>(npcManager.getAllNpcs());
+            for (Npc npc : npcs) {
+                boolean skinUpdated = npc.getData().getSkin() != null &&
+                        !npc.getData().getSkin().identifier().isEmpty() &&
+                        SkinFetcher.isPlaceholder(npc.getData().getSkin().identifier());
+
+                boolean displayNameUpdated = npc.getData().getDisplayName() != null &&
+                        !npc.getData().getDisplayName().isEmpty() &&
+                        SkinFetcher.isPlaceholder(npc.getData().getDisplayName());
+
+                if (skinUpdated || displayNameUpdated) {
+                    npc.removeForAll();
+                    npc.create();
+                    npc.spawnForAll();
+                }
+            }
+        }, 3, npcUpdateInterval, TimeUnit.MINUTES);
+
         // Creating new instance of CloudCommandManager and registering all needed components.
         // NOTE: Brigadier is disabled by default. More detailed information about that can be found in CloudCommandManager class.
 //        commandManager = new CloudCommandManager(this, false)
@@ -349,6 +379,15 @@ public class FancyNpcs extends JavaPlugin implements FancyNpcsPlugin {
     @Override
     public AttributeManagerImpl getAttributeManager() {
         return attributeManager;
+    }
+
+    public SkinCacheYaml getSkinCacheYaml() {
+        return skinCache;
+    }
+
+    @Override
+    public SkinCache getSkinCache() {
+        return skinCache;
     }
 
     @Override
