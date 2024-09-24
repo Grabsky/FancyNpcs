@@ -25,7 +25,7 @@ import de.oliver.fancynpcs.api.NpcManager;
 import de.oliver.fancynpcs.api.utils.SkinCache;
 import de.oliver.fancynpcs.api.utils.SkinFetcher;
 import de.oliver.fancynpcs.commands.CloudCommandManager;
-import de.oliver.fancynpcs.commands.npc.CreateCMD;
+import de.oliver.fancynpcs.commands.parameters.LocationParameter;
 import de.oliver.fancynpcs.listeners.PlayerChangedWorldListener;
 import de.oliver.fancynpcs.listeners.PlayerJoinListener;
 import de.oliver.fancynpcs.listeners.PlayerNpcsListener;
@@ -45,11 +45,18 @@ import de.oliver.fancynpcs.v1_20_6.Npc_1_20_6;
 import de.oliver.fancynpcs.v1_21_1.Npc_1_21_1;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import revxrsal.commands.Lamp;
+import revxrsal.commands.annotation.Command;
+import revxrsal.commands.annotation.Flag;
+import revxrsal.commands.annotation.Optional;
 import revxrsal.commands.bukkit.BukkitLamp;
+import revxrsal.commands.bukkit.BukkitLampConfig;
 import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 
 import java.util.ArrayList;
@@ -60,6 +67,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
@@ -339,9 +349,45 @@ public class FancyNpcs extends JavaPlugin implements FancyNpcsPlugin {
 //                .registerArguments()
 //                .registerExceptionHandlers()
 //                .registerCommands();
-        final Lamp<BukkitCommandActor> commands = BukkitLamp.builder(this).build();
-        // ...
-        commands.register(CreateCMD.INSTANCE);
+        // Creating new instance of LampCommandManager. initializing and registering all needed components
+        // final LampCommandManager commands = new LampCommandManager(this)
+        //         .initialize()
+        //         .registerCommands();
+
+        // TEST TEST TEST
+
+        // Configuring not to enable Brigadier by default.
+        final BukkitLampConfig<BukkitCommandActor> config = BukkitLampConfig.builder(this)
+                .disableBrigadier()
+                .build();
+
+        final Lamp<BukkitCommandActor> lamp = BukkitLamp.builder(config)
+                // Registering parameters.
+                .parameterTypes(it -> {
+                    it.addParameterType(Location.class, LocationParameter.INSTANCE);
+                })
+                // Registering suggestions.
+                .suggestionProviders(it -> {
+                    it.addProvider(Location.class, LocationParameter.INSTANCE);
+                })
+                .build();
+
+        lamp.register(TestCommand.INSTANCE);
+    }
+
+    private enum TestCommand {
+        INSTANCE;
+
+        @Command("npc3 create <name>")
+        public void onCreate(
+                final @NotNull CommandSender sender,
+                final @NotNull String name,
+                final @Nullable @Optional @Flag("type") EntityType type,
+                final @Nullable @Optional @Flag("location") Location location,
+                final @Nullable @Optional @Flag("world") World world
+        ) {
+            sender.sendMessage("foo bar 123");
+        }
     }
 
     @Override

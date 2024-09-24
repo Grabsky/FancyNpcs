@@ -6,10 +6,14 @@ import de.oliver.fancynpcs.api.Npc;
 import de.oliver.fancynpcs.api.NpcData;
 import de.oliver.fancynpcs.api.events.NpcCreateEvent;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import revxrsal.commands.annotation.Command;
+import revxrsal.commands.annotation.Flag;
 import revxrsal.commands.annotation.Optional;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
 
@@ -27,14 +31,14 @@ public enum CreateCMD {
     private static final Pattern NPC_NAME_PATTERN = Pattern.compile("^[A-Za-z0-9/_-]*$");
     private static final UUID EMPTY_UUID = new UUID(0,0);
 
-    @Command("npc create <name>")
+    @Command("npc2 create <name>")
     @CommandPermission("fancynpcs.command.npc.create")
     public void onCreate(
             final @NotNull CommandSender sender,
             final @NotNull String name,
-            final @Nullable @Optional EntityType type
-            //final @Nullable @Flag(value = "location", suggestions = "relative_location") Location location,
-            //final @Nullable @Flag("world") World world
+            final @Nullable @Optional @Flag("type") EntityType type,
+            final @Nullable @Optional @Flag("location") Location location,
+            final @Nullable @Optional @Flag("world") World world
     ) {
         // Sending error message if name does not match configured pattern.
         if (!NPC_NAME_PATTERN.matcher(name).find()) {
@@ -49,20 +53,20 @@ public enum CreateCMD {
             return;
         }
         // Sending error message if sender is console and location has not been specified.
-//        if (sender instanceof ConsoleCommandSender && location == null) {
-//            translator.translate("npc_create_failure_must_specify_location").send(sender);
-//            return;
-//        }
+        if (sender instanceof ConsoleCommandSender && location == null) {
+            translator.translate("npc_create_failure_must_specify_location").send(sender);
+            return;
+        }
         // Sending error message if sender is console and world has not been specified.
-//        if (sender instanceof ConsoleCommandSender && world == null) {
-//            translator.translate("npc_create_failure_must_specify_world").send(sender);
-//            return;
-//        }
+        if (sender instanceof ConsoleCommandSender && world == null) {
+            translator.translate("npc_create_failure_must_specify_world").send(sender);
+            return;
+        }
         // Finalizing Location argument. This argument is optional and defaults to player's current location.
-//        final Location finalLocation = (location == null && sender instanceof Player player) ? player.getLocation() : location;
+        final Location finalLocation = (location == null && sender instanceof Player player) ? player.getLocation() : location;
         // Updating World of the Location argument if '--world' flag has been specified.
-//        if (world != null)
-//            finalLocation.setWorld(world);
+        if (world != null)
+            finalLocation.setWorld(world);
         // Creating new NPC and applying data.
         final Npc npc = FancyNpcs.getInstance().getNpcAdapter().apply(new NpcData(name, creator, sender instanceof Player player ? player.getLocation() : Bukkit.getWorlds().getFirst().getSpawnLocation()));
         // Setting the type of NPC. Flag '--type' is optional and defaults to EntityType.PLAYER.

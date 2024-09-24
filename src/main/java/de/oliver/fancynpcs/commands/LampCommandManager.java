@@ -2,10 +2,11 @@ package de.oliver.fancynpcs.commands;
 
 import de.oliver.fancynpcs.FancyNpcs;
 import de.oliver.fancynpcs.commands.npc.CreateCMD;
-import de.oliver.fancynpcs.commands.parameters.FlagParameterFactory;
-import de.oliver.fancynpcs.commands.parameters.FlagSuggestionsFactory;
+import de.oliver.fancynpcs.commands.parameters.LocationParameter;
+import org.bukkit.Location;
 import revxrsal.commands.Lamp;
 import revxrsal.commands.bukkit.BukkitLamp;
+import revxrsal.commands.bukkit.BukkitLampConfig;
 import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,15 +22,19 @@ public final class LampCommandManager {
     }
 
     public LampCommandManager initialize() {
+        // Configuring not to enable Brigadier by default.
+        final BukkitLampConfig<BukkitCommandActor> config = BukkitLampConfig.builder(plugin)
+                .disableBrigadier()
+                .build();
         // Building an instance of Lamp.
-        this.lamp = BukkitLamp.builder(plugin)
+        this.lamp = BukkitLamp.builder(config)
                 // Registering parameters.
                 .parameterTypes(it -> {
-                    it.addParameterTypeFactory(FlagParameterFactory.INSTANCE);
+                    it.addParameterType(Location.class, LocationParameter.INSTANCE);
                 })
                 // Registering suggestions.
                 .suggestionProviders(it -> {
-                    it.addProviderFactory(FlagSuggestionsFactory.INSTANCE);
+                    it.addProvider(Location.class, LocationParameter.INSTANCE);
                 })
                 .build();
         // ...
